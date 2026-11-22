@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Java
@@ -24,37 +24,21 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
-
-      - name: Find Gradle and Build APK
-        shell: bash
+      - name: Check project files
         run: |
-          echo "Searching for Gradle Wrapper..."
+          echo "Checking NIZCamera..."
+          ls -la NIZCamera
+          test -f NIZCamera/gradlew
 
-          WRAPPER=$(find . -type f -name gradlew \
-            -not -path '*/.gradle/*' | head -n 1)
-
-          if [ -z "$WRAPPER" ]; then
-            echo "ERROR: gradlew not found!"
-            echo "Repository files:"
-            find . -maxdepth 4 -type f | sort
-            exit 1
-          fi
-
-          PROJECT_DIR=$(dirname "$WRAPPER")
-
-          echo "Found: $WRAPPER"
-          echo "Project directory: $PROJECT_DIR"
-
-          chmod +x "$WRAPPER"
-          cd "$PROJECT_DIR"
-
-          ./gradlew assembleDebug
+      - name: Build APK
+        working-directory: NIZCamera
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: NIZ-Camera-APK
-          path: '**/app/build/outputs/apk/debug/*.apk'
+          path: NIZCamera/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
